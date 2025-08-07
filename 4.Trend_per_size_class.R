@@ -47,6 +47,23 @@ abundance_ts <- copepods %>%
 # Change data table
 abundance_ts <- abundance_ts %>%
   rename(date = object_date, name = feeding_source_split, value = abundance)
+
+##### Intermediate step : replace NA per 0 #####
+#Replace plankton NA per 0
+#crossing of all the possibilities
+
+# Change data table
+all_dates <- unique(abundance_ts$date)
+all_taxa  <- unique(abundance_ts$name)
+
+complete_grid <- crossing(date = all_dates, name = all_taxa)
+
+abundance_ts <- complete_grid %>%
+  left_join(abundance_ts, by = c("date", "name")) %>%
+  mutate(value = replace_na(value, 0))
+
+
+
 #First step: Regularization
 
 # Define a sequence of dates 
@@ -80,7 +97,7 @@ table_reg <- left_join(ref, abundance_ts, by=c("closest_date"="date"), relations
 
 # erase data for matches that are too far from the target
 table_reg_stl<- table_reg %>%
-  mutate(value = if_else(date_diff > 14, NA, value))
+  mutate(value = if_else(date_diff > 7, NA, value))
 #table_reg_stl<-table_reg_stl%>%filter(year>"1999-05-26")
 table_reg_stl <- table_reg_stl%>%mutate(value=log10(value+1))
 dstl <- table_reg_stl %>%
